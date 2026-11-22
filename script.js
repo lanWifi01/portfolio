@@ -1,49 +1,50 @@
 (() => {
-  const area = document.querySelector(".hero-role-area");
-  const panel = area.querySelector(".hero-role-panel");
-  const handle = panel.querySelector("button");
-  let drag;
+  const preview = document.querySelector(".hero-project-preview");
+  const link = preview.querySelector("a");
+  const image = link.querySelector("img");
+  const title = link.querySelector("strong");
+  const description = link.querySelector(".hero-project-description");
+  const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const projects = [...document.querySelectorAll(".project-card[id]")]
+    .map((card) => ({
+      id: card.id,
+      title: card.querySelector("h3").textContent,
+      description: card.querySelector(".project-content > p:not(.project-type)").textContent,
+      source: card.querySelector(".project-media img, .game-preview img")?.src,
+    }))
+    .filter((project) => project.source);
 
-  const movePanel = (x, y) => {
-    const maxX = Math.max(0, area.clientWidth - panel.offsetWidth);
-    const maxY = Math.max(0, area.clientHeight - panel.offsetHeight);
-    panel.style.left = `${Math.min(maxX, Math.max(0, x))}px`;
-    panel.style.top = `${Math.min(maxY, Math.max(0, y))}px`;
-    panel.style.right = "auto";
-  };
+  let current = 0;
+  let loading = false;
+  const canRotate = () => !motionPreference.matches && !document.hidden
+    && !preview.matches(":hover, :focus-within");
 
-  handle.addEventListener("pointerdown", (event) => {
-    if (event.button !== 0 || drag) return;
-    const bounds = panel.getBoundingClientRect();
-    drag = { id: event.pointerId, x: event.clientX - bounds.left, y: event.clientY - bounds.top };
-    handle.setPointerCapture(event.pointerId);
-  });
-
-  handle.addEventListener("pointermove", (event) => {
-    if (event.pointerId !== drag?.id) return;
-    const bounds = area.getBoundingClientRect();
-    movePanel(event.clientX - bounds.left - drag.x, event.clientY - bounds.top - drag.y);
-  });
-
-  handle.addEventListener("lostpointercapture", () => { drag = undefined; });
-
-  handle.addEventListener("keydown", (event) => {
-    const offsets = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] };
-    const offset = offsets[event.key];
-    if (event.key === "Home") {
-      event.preventDefault();
-      ["left", "top", "right"].forEach((property) => panel.style.removeProperty(property));
-    } else if (Array.isArray(offset)) {
-      event.preventDefault();
-      movePanel(panel.offsetLeft + offset[0], panel.offsetTop + offset[1]);
+  window.setInterval(async () => {
+    if (!canRotate() || loading) return;
+    loading = true;
+    const next = (current + 1) % projects.length;
+    const project = projects[next];
+    const preload = new Image();
+    preload.src = project.source;
+    try {
+      await preload.decode();
+      if (!canRotate()) return;
+      current = next;
+      image.src = project.source;
+      title.textContent = project.title;
+      description.textContent = project.description;
+      link.hash = project.id;
+      window.gsap?.fromTo(image, { opacity: 0.65 }, {
+        opacity: 1,
+        duration: 0.42,
+        clearProps: "opacity",
+      });
+    } catch {
+      // Keep the current preview if the next screenshot cannot be loaded.
+    } finally {
+      loading = false;
     }
-  });
-
-  window.addEventListener("resize", () => {
-    if (panel.style.left) movePanel(panel.offsetLeft, panel.offsetTop);
-  });
-
-  handle.hidden = false;
+  }, 4200);
 })();
 
 (() => {
@@ -217,21 +218,40 @@
       onRefresh: syncProject,
     });
 
-    const moveProject = (event) => {
-      const target = currentIndex + Number(event.currentTarget.dataset.projectStep);
+    const goToProject = (target) => {
       if (target < 0 || target > lastIndex) return;
       const stepProgress = (target + 0.5) / cards.length;
       trigger.scroll(trigger.start + stepProgress * (trigger.end - trigger.start));
       ScrollTrigger.update();
     };
+    const moveProject = (event) => goToProject(currentIndex + Number(event.currentTarget.dataset.projectStep));
+    const openLinkedProject = () => {
+      goToProject(cards.findIndex((card) => `#${card.id}` === window.location.hash && card.id));
+    };
+    const previewLink = document.querySelector(".hero-project-link");
+    const openPreview = (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      if (window.location.hash !== previewLink.hash) history.pushState(null, "", previewLink.hash);
+      openLinkedProject();
+      stage.focus({ preventScroll: true });
+    };
     previous.addEventListener("click", moveProject);
     next.addEventListener("click", moveProject);
+    previewLink.addEventListener("click", openPreview);
+    window.addEventListener("hashchange", openLinkedProject);
+    window.addEventListener("load", openLinkedProject);
+    const initialLink = window.requestAnimationFrame(openLinkedProject);
     ScrollTrigger.refresh(true);
 
     return () => {
       reveal?.revert();
       previous.removeEventListener("click", moveProject);
       next.removeEventListener("click", moveProject);
+      previewLink.removeEventListener("click", openPreview);
+      window.removeEventListener("hashchange", openLinkedProject);
+      window.removeEventListener("load", openLinkedProject);
+      window.cancelAnimationFrame(initialLink);
       controls.hidden = true;
       track.classList.remove("is-stepped");
       track.style.removeProperty("--project-count");
