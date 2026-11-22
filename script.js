@@ -1,4 +1,28 @@
 (() => {
+  const hero = document.querySelector(".hero-stage");
+  const circle = hero.querySelector(".hero-invert-cursor");
+  const hideCircle = () => circle.classList.remove("is-visible");
+
+  const followMouse = (event) => {
+    if (event.pointerType !== "mouse") {
+      hideCircle();
+      return;
+    }
+    const bounds = hero.getBoundingClientRect();
+    const x = event.clientX - bounds.left;
+    const y = event.clientY - bounds.top;
+    circle.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+    circle.classList.add("is-visible");
+  };
+
+  hero.addEventListener("pointerenter", followMouse);
+  hero.addEventListener("pointermove", followMouse);
+  hero.addEventListener("pointerleave", hideCircle);
+  hero.addEventListener("pointercancel", hideCircle);
+  window.addEventListener("blur", hideCircle);
+})();
+
+(() => {
   const preview = document.querySelector(".hero-project-preview");
   const link = preview.querySelector("a");
   const image = link.querySelector("img");
