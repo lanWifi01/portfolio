@@ -92,21 +92,42 @@ h1, h2, h3 { line-height: 1.05; text-wrap: balance; }
   overflow: hidden;
   background: #0d2341;
 }
-.hero-photo {
+.hero-photo-grid {
   position: absolute;
-  inset: 0;
+  inset: 0 0 -8%;
   z-index: -2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: clamp(.25rem, .7vw, .65rem);
+  background: var(--bg);
+}
+.hero-tile {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #112442;
+}
+.hero-tile-featured { grid-area: 1 / 2 / 3 / 3; }
+.hero-tile img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 39%;
+  object-position: center 36%;
+  filter: brightness(.75) saturate(.86);
+  transition: filter .3s ease, transform .45s ease;
 }
+.hero-tile-award img { object-position: 38% 37%; }
+@media (hover: hover) {
+  .hero-tile:hover img { filter: brightness(1) saturate(1); transform: scale(1.025); }
+}
+.hero-tile:active img { filter: brightness(1) saturate(1); }
 .hero-stage::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(180deg, #040c19dc, #07172f15 23%, #0b2a4f26 50%, #06101fe8 100%);
+  background: linear-gradient(180deg, #040c1975, transparent 24% 58%, #06101fe8 100%);
   pointer-events: none;
 }
 .hero-shade {
@@ -119,6 +140,7 @@ h1, h2, h3 { line-height: 1.05; text-wrap: balance; }
 }
 .hero-copy {
   align-self: stretch;
+  pointer-events: none;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   padding-block: var(--nav-clearance) max(.65rem, env(safe-area-inset-bottom, 0px));
@@ -131,33 +153,46 @@ h1, h2, h3 { line-height: 1.05; text-wrap: balance; }
   text-wrap: initial;
   text-shadow: 0 2px 22px #050d1a70;
 }
-.hero-roles {
+.hero-role-area {
+  position: relative;
   grid-row: 1;
-  align-self: center;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: start;
-  gap: .65rem;
-  margin: 0;
-  padding: 0;
+}
+.hero-role-panel {
+  position: absolute;
+  top: clamp(0px, 38%, calc(100% - 7.5rem));
+  right: 0;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid #47688f;
+  border-radius: .45rem;
+  background: #08162ae8;
+  box-shadow: 0 .4rem 1.6rem #03081266;
   color: #e1efff;
-  font: 500 clamp(.8125rem, 1.1vw, .9375rem)/1.4 var(--mono);
+  pointer-events: auto;
+}
+.hero-role-handle {
+  width: 100%;
+  padding: .35rem .65rem;
+  border: 0;
+  border-bottom: 1px solid #47688f;
+  background: #173456;
+  color: var(--ice);
+  font: 500 .75rem/1.4 var(--mono);
+  text-align: left;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.hero-role-handle::after { content: "⠿"; float: right; font-size: 1rem; line-height: 1; }
+.hero-role-handle:active { cursor: grabbing; }
+.hero-role-handle:focus-visible { outline-offset: -3px; }
+.hero-roles {
+  display: grid;
+  gap: .25rem;
+  margin: 0;
+  padding: .6rem .65rem;
+  font: 500 clamp(.75rem, 1.1vw, .875rem)/1.4 var(--mono);
   list-style: none;
-}
-.hero-roles li {
-  justify-self: start;
-  padding: .45rem .65rem;
-  border-inline-start: 2px solid var(--ice);
-  border-radius: .25rem;
-  background: #0b1b31e6;
-}
-.hero-roles li:nth-child(2) {
-  justify-self: center;
-  margin-top: clamp(1.5rem, 11vh, 6rem);
-}
-.hero-roles li:last-child {
-  justify-self: end;
-  margin-top: clamp(.5rem, 4vh, 2.5rem);
 }
 .page-content {
   position: relative;
@@ -340,12 +375,12 @@ h1, h2, h3 { line-height: 1.05; text-wrap: balance; }
 }
 @media (max-width: 39rem) {
   .hero h1 span { display: block; }
-  .hero-roles {
-    align-self: end;
+  .hero-photo-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-bottom: clamp(.9rem, 6vh, 3rem);
+    grid-template-rows: minmax(0, 1.45fr) repeat(2, minmax(0, 1fr));
   }
-  .hero-roles li:nth-child(n) { margin-top: 0; justify-self: start; }
+  .hero-tile-featured { grid-area: 1 / 1 / 2 / 3; }
+  .hero-role-panel { top: clamp(0px, 56%, calc(100% - 7rem)); }
   .project-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 26rem) {

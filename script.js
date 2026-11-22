@@ -1,4 +1,52 @@
 (() => {
+  const area = document.querySelector(".hero-role-area");
+  const panel = area.querySelector(".hero-role-panel");
+  const handle = panel.querySelector("button");
+  let drag;
+
+  const movePanel = (x, y) => {
+    const maxX = Math.max(0, area.clientWidth - panel.offsetWidth);
+    const maxY = Math.max(0, area.clientHeight - panel.offsetHeight);
+    panel.style.left = `${Math.min(maxX, Math.max(0, x))}px`;
+    panel.style.top = `${Math.min(maxY, Math.max(0, y))}px`;
+    panel.style.right = "auto";
+  };
+
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || drag) return;
+    const bounds = panel.getBoundingClientRect();
+    drag = { id: event.pointerId, x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+    handle.setPointerCapture(event.pointerId);
+  });
+
+  handle.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== drag?.id) return;
+    const bounds = area.getBoundingClientRect();
+    movePanel(event.clientX - bounds.left - drag.x, event.clientY - bounds.top - drag.y);
+  });
+
+  handle.addEventListener("lostpointercapture", () => { drag = undefined; });
+
+  handle.addEventListener("keydown", (event) => {
+    const offsets = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] };
+    const offset = offsets[event.key];
+    if (event.key === "Home") {
+      event.preventDefault();
+      ["left", "top", "right"].forEach((property) => panel.style.removeProperty(property));
+    } else if (Array.isArray(offset)) {
+      event.preventDefault();
+      movePanel(panel.offsetLeft + offset[0], panel.offsetTop + offset[1]);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (panel.style.left) movePanel(panel.offsetLeft, panel.offsetTop);
+  });
+
+  handle.hidden = false;
+})();
+
+(() => {
   const nav = document.querySelector(".floating-nav");
   const links = [...nav.querySelectorAll("a")];
   const sections = links.slice(1).map((link) => document.querySelector(link.hash));
@@ -44,7 +92,7 @@
       defaults: { ease: "none" },
       scrollTrigger: { trigger: "#main", start: "top bottom", end: "top top", scrub: true },
     })
-      .to(".hero-photo", { yPercent: -12 }, 0)
+      .to(".hero-photo-grid", { yPercent: -7 }, 0)
       .to(".hero-shade", { opacity: 0.72 }, 0)
       .to(".hero-copy", { y: -32, opacity: 0.35 }, 0);
 

@@ -55,15 +55,26 @@
   <main>
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-stage">
-        <img class="hero-photo" src="https://avatars.githubusercontent.com/u/211705063?v=4&amp;s=720" alt="" width="720" height="720" fetchpriority="high">
+        <div class="hero-photo-grid" aria-hidden="true">
+          <div class="hero-tile hero-tile-featured"><img src="./assets/my%20images/img3.webp" alt="" fetchpriority="high"></div>
+          <div class="hero-tile"><img src="./assets/my%20images/img1.jpg" alt=""></div>
+          <div class="hero-tile"><img src="./assets/my%20images/img2.jpg" alt=""></div>
+          <div class="hero-tile hero-tile-award"><img src="./assets/my%20images/img4.jpeg" alt=""></div>
+          <div class="hero-tile"><img src="./assets/my%20images/img5.jpg" alt=""></div>
+        </div>
         <div class="hero-shade" aria-hidden="true"></div>
         <div class="shell hero-copy">
           <h1 id="hero-title">Leander Dylan <span>Broñola</span></h1>
-          <ul class="hero-roles" aria-label="Roles" role="list">
-            <li>Student Software Engineer</li>
-            <li>Full-Stack Developer</li>
-            <li>Game Developer</li>
-          </ul>
+          <div class="hero-role-area">
+            <div class="hero-role-panel">
+              <button class="hero-role-handle" type="button" aria-label="Move roles panel with arrow keys; Home resets position" hidden>Roles</button>
+              <ul class="hero-roles" aria-label="Roles" role="list">
+                <li>Student Software Engineer</li>
+                <li>Full-Stack Developer</li>
+                <li>Game Developer</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </section>
