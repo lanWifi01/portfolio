@@ -34,10 +34,12 @@
       title.textContent = project.title;
       description.textContent = project.description;
       link.hash = project.id;
-      window.gsap?.fromTo(image, { opacity: 0.65 }, {
+      window.gsap?.fromTo(image, { x: 8, opacity: 0.68 }, {
+        x: 0,
         opacity: 1,
         duration: 0.42,
-        clearProps: "opacity",
+        ease: "power2.out",
+        clearProps: "opacity,transform",
       });
     } catch {
       // Keep the current preview if the next screenshot cannot be loaded.
@@ -49,9 +51,28 @@
 
 (() => {
   const nav = document.querySelector(".floating-nav");
+  const indicator = nav.querySelector(".nav-indicator");
   const links = [...nav.querySelectorAll("a")];
   const sections = links.slice(1).map((link) => document.querySelector(link.hash));
+  const { gsap, ScrollToPlugin } = window;
+  const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
   let currentLink;
+  let scrollTween;
+
+  if (gsap && ScrollToPlugin) gsap.registerPlugin(ScrollToPlugin);
+
+  const positionIndicator = (link, animate) => {
+    if (!gsap || motionPreference.matches || !link) return;
+    const position = { x: link.offsetLeft, width: link.offsetWidth };
+
+    if (animate && nav.classList.contains("has-indicator")) {
+      gsap.to(indicator, { ...position, duration: 0.24, ease: "power2.out", overwrite: true });
+    } else {
+      gsap.killTweensOf(indicator);
+      gsap.set(indicator, position);
+      nav.classList.add("has-indicator");
+    }
+  };
 
   const updateNavigation = () => {
     const readingLine = nav.getBoundingClientRect().bottom + 24;
@@ -70,11 +91,49 @@
     currentLink?.removeAttribute("aria-current");
     activeLink.setAttribute("aria-current", "location");
     currentLink = activeLink;
+    positionIndicator(activeLink, true);
   };
 
+  nav.addEventListener("click", (event) => {
+    const link = event.target.closest("a");
+    if (!link || !gsap || !ScrollToPlugin || motionPreference.matches || event.defaultPrevented
+      || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const target = document.querySelector(link.hash);
+    if (!target) return;
+    const offsetY = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+
+    event.preventDefault();
+    scrollTween?.kill();
+    if (window.location.hash !== link.hash) history.pushState(null, "", link.hash);
+    scrollTween = gsap.to(window, {
+      scrollTo: { y: target, offsetY, autoKill: true },
+      duration: 0.65,
+      ease: "power2.inOut",
+      onComplete: () => {
+        if (event.detail !== 0) return;
+        target.tabIndex = -1;
+        target.focus({ preventScroll: true });
+      },
+    });
+  });
+
+  const refreshNavigation = () => {
+    updateNavigation();
+    positionIndicator(currentLink, false);
+  };
+  motionPreference.addEventListener("change", () => {
+    if (motionPreference.matches) {
+      scrollTween?.kill();
+      nav.classList.remove("has-indicator");
+    } else {
+      refreshNavigation();
+    }
+  });
+  window.addEventListener("popstate", () => scrollTween?.kill());
   window.addEventListener("scroll", updateNavigation, { passive: true });
-  window.addEventListener("resize", updateNavigation);
-  window.addEventListener("load", updateNavigation);
+  window.addEventListener("resize", refreshNavigation);
+  window.addEventListener("load", refreshNavigation);
   updateNavigation();
 })();
 
@@ -106,13 +165,11 @@
     });
 
     document.querySelectorAll("[data-reveal]").forEach((section) => {
-      gsap.from(section, {
-        y: 14,
-        opacity: 0.7,
-        duration: 0.48,
-        ease: "power2.out",
-        clearProps: "opacity,transform",
-        scrollTrigger: { trigger: section, start: "top 92%", once: true },
+      gsap.fromTo(section.children, { y: 14, opacity: 0.86 }, {
+        y: 0,
+        opacity: 1,
+        ease: "none",
+        scrollTrigger: { trigger: section, start: "top 96%", end: "top 76%", scrub: true },
       });
     });
   });
